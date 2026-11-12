@@ -1,0 +1,757 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Generador de Reporte Ejecutivo</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Plan: "hoja de análisis". Papel cálido, tinta casi negra, acento verde petróleo para los datos
+   y ámbar solo para alertas. Una columna, resumen primero, detalle después. */
+:root {
+  --bg:#f5f3ee; --surface:#ffffff; --ink:#1b1a17; --muted:#6c6860; --line:#e3dfd5;
+  --accent:#0f6b63; --on-accent:#ffffff; --accent-soft:#d7ebe8;
+  --warn:#8a4b05; --warn-soft:#f8ead2; --bad:#b42318;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:#121412; --surface:#1a1d1b; --ink:#ebe9e3; --muted:#9a9a92; --line:#2d322f;
+    --accent:#5fd0c2; --on-accent:#0b1211; --accent-soft:#1d3b38;
+    --warn:#f0b45a; --warn-soft:#3a2d15; --bad:#ff8a80;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#121412; --surface:#1a1d1b; --ink:#ebe9e3; --muted:#9a9a92; --line:#2d322f;
+  --accent:#5fd0c2; --on-accent:#0b1211; --accent-soft:#1d3b38;
+  --warn:#f0b45a; --warn-soft:#3a2d15; --bad:#ff8a80;
+  color-scheme: dark;
+}
+body {
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; font-size:15px; line-height:1.5;
+}
+h1, h2 { font-family:"Space Grotesk",Inter,system-ui,sans-serif; letter-spacing:-.01em; text-wrap:balance; }
+h1 { margin:0; font-size:1.75rem; font-weight:700; }
+h2 { margin:0 0 4px; font-size:1.05rem; font-weight:700; }
+p { margin:0; }
+.wrap {
+  max-width:1040px; margin:0 auto; padding-block:28px 40px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+}
+.top { border-bottom:1px solid var(--line); padding-bottom:18px; margin-bottom:22px; }
+.top p { color:var(--muted); margin-top:6px; max-width:68ch; }
+.panel { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:16px; min-width:0; }
+.muted { color:var(--muted); font-size:.87rem; }
+.eyebrow { font-size:.74rem; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:600; }
+.error { background:var(--bad); color:#fff; padding:12px 16px; border-radius:10px; margin-bottom:16px; font-weight:600; }
+:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+
+.drop {
+  display:block; border:1.5px dashed var(--line); border-radius:10px; padding:26px 16px;
+  text-align:center; cursor:pointer; transition:background .2s, border-color .2s;
+}
+.drop:hover, .drop.on { border-color:var(--accent); background:var(--accent-soft); }
+.drop b { display:block; font-size:1rem; margin-bottom:4px; }
+.drop input { display:none; }
+.fields { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; margin-top:14px; }
+.fields > * { min-width:0; }
+label.lbl { display:block; font-size:.8rem; color:var(--muted); margin-bottom:5px; font-weight:600; }
+select, input[type=text] {
+  width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:8px;
+  background:var(--surface); color:var(--ink); font:inherit;
+}
+.btn {
+  background:var(--accent); color:var(--on-accent); border:0; border-radius:8px;
+  padding:10px 16px; font:inherit; font-weight:600; cursor:pointer; transition:opacity .15s;
+}
+.btn:hover { opacity:.88; }
+.btn.sec { background:transparent; color:var(--accent); border:1px solid var(--accent); }
+.row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:16px; }
+
+.chips { display:flex; flex-wrap:wrap; gap:8px; }
+.chip {
+  display:inline-flex; align-items:center; gap:7px; padding:6px 12px; border:1px solid var(--line);
+  border-radius:999px; font-size:.88rem; cursor:pointer; user-select:none;
+}
+.chip input { accent-color:var(--accent); }
+
+.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:16px; }
+.kpi { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px; min-width:0; }
+.kl { font-size:.74rem; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.05em; }
+.kv { font-family:"Space Grotesk",Inter,sans-serif; font-size:1.55rem; font-weight:700; margin-top:4px; font-variant-numeric:tabular-nums; }
+.ks { font-size:.8rem; color:var(--muted); margin-top:2px; }
+
+.summary { font-size:1.02rem; line-height:1.65; max-width:70ch; }
+.alert { background:var(--warn-soft); color:var(--warn); padding:10px 14px; border-radius:8px; font-weight:600; margin-top:12px; }
+.head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:10px; }
+.seg { display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+.seg button { background:transparent; color:var(--muted); border:0; padding:6px 12px; cursor:pointer; font:inherit; font-size:.85rem; }
+.seg button.on { background:var(--ink); color:var(--surface); }
+
+.two { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.two > * { min-width:0; }
+@media (max-width:760px) { .two { grid-template-columns:1fr; } }
+ul, ol { padding-left:20px; margin:6px 0; }
+li { margin:6px 0; }
+.tbl-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:.9rem; margin-top:10px; }
+th, td { text-align:left; padding:9px 8px; border-bottom:1px solid var(--line); }
+th { color:var(--muted); font-size:.74rem; text-transform:uppercase; letter-spacing:.04em; font-weight:600; }
+td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; }
+.mini { display:flex; gap:8px; align-items:center; justify-content:flex-end; }
+.mini span { height:6px; width:110px; background:var(--line); border-radius:4px; overflow:hidden; }
+.mini span i { display:block; height:100%; background:var(--accent); border-radius:4px; }
+
+.chart { width:100%; height:auto; display:block; }
+.chart .bar { fill:var(--accent); transform-box:fill-box; transform-origin:50% 100%; animation:grow .7s cubic-bezier(.2,.8,.2,1) both; }
+.chart .bar:hover, .chart .dot:hover { opacity:.8; }
+.chart text { fill:var(--muted); font-size:11px; }
+.chart .vl { fill:var(--ink); font-weight:600; }
+.chart .line { fill:none; stroke:var(--accent); stroke-width:3; stroke-linejoin:round; stroke-linecap:round; stroke-dasharray:1200; stroke-dashoffset:1200; animation:draw 1s ease forwards; }
+.chart .area { fill:var(--accent); opacity:.12; }
+.chart .dot { fill:var(--surface); stroke:var(--accent); stroke-width:2.5; }
+@keyframes grow { from { transform:scaleY(0); } to { transform:scaleY(1); } }
+@keyframes draw { to { stroke-dashoffset:0; } }
+@media (prefers-reduced-motion: reduce) {
+  .chart .bar, .chart .line { animation:none; }
+  .chart .line { stroke-dasharray:none; stroke-dashoffset:0; }
+}
+
+.tip {
+  position:fixed; pointer-events:none; background:var(--ink); color:var(--surface);
+  padding:8px 10px; border-radius:8px; font-size:.82rem; z-index:9;
+}
+.note { margin-top:12px; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Generador de Reporte Ejecutivo</h1>
+    <p>Sube tu Excel y obtén indicadores, gráficos, hallazgos y recomendaciones. El archivo se lee en tu navegador: no se envía a ningún servidor.</p>
+  </header>
+
+  <div id="error" class="error" hidden></div>
+
+  <section class="panel">
+    <p class="eyebrow">Paso 1</p>
+    <h2>Carga tu archivo</h2>
+    <p class="muted">Formatos: .xlsx, .xls o .csv. Puedes arrastrarlo al recuadro.</p>
+    <label class="drop" id="dropzone">
+      <b>Arrastra tu Excel aquí o toca para elegirlo</b>
+      <span class="muted" id="info">Ningún archivo cargado todavía.</span>
+      <input type="file" id="archivo" accept=".xlsx,.xls,.csv">
+    </label>
+    <div class="fields" id="hojaWrap" hidden>
+      <div><label class="lbl" for="hoja">Hoja</label><select id="hoja"></select></div>
+    </div>
+  </section>
+
+  <section class="panel" id="config" hidden>
+    <p class="eyebrow">Paso 2</p>
+    <h2>Confirma las columnas</h2>
+    <p class="muted">Detectamos las columnas automáticamente. Ajusta si hace falta.</p>
+    <div class="fields">
+      <div><label class="lbl" for="colFecha">Fecha</label><select id="colFecha"></select></div>
+      <div><label class="lbl" for="colMetrica">Métrica principal (ventas, ingresos, monto)</label><select id="colMetrica"></select></div>
+      <div><label class="lbl" for="colCat">Categoría (región, producto, vendedor)</label><select id="colCat"></select></div>
+      <div><label class="lbl" for="colCosto">Costo (opcional, para margen bruto)</label><select id="colCosto"></select></div>
+      <div><label class="lbl" for="titulo">Título del reporte</label><input type="text" id="titulo" value="Reporte ejecutivo"></div>
+    </div>
+    <p class="muted" style="margin-top:12px">Supuestos: las fechas dd/mm/aaaa se leen como día/mes/año, y la coma es separador de miles.</p>
+    <div class="row"><button class="btn" id="analizar">Analizar datos</button></div>
+  </section>
+
+  <div id="results" hidden>
+    <section class="panel" id="filtros" hidden>
+      <p class="eyebrow">Filtro</p>
+      <h2>Categorías incluidas</h2>
+      <p class="muted" style="margin-bottom:12px">Desmarca una categoría y todo el reporte se recalcula.</p>
+      <div class="chips" id="chips"></div>
+    </section>
+
+    <section class="kpis" id="kpis"></section>
+
+    <section class="panel">
+      <p class="eyebrow">Resumen</p>
+      <p class="summary" id="resumen"></p>
+      <div id="alerta" class="alert" hidden></div>
+    </section>
+
+    <section class="panel" id="bloqueMes">
+      <div class="head">
+        <div>
+          <h2>Evolución mensual</h2>
+          <p class="muted">Pasa el cursor sobre cada punto para ver el valor.</p>
+        </div>
+        <div class="seg" role="group" aria-label="Tipo de gráfico">
+          <button data-tipo="barras" class="on">Barras</button>
+          <button data-tipo="linea">Línea</button>
+        </div>
+      </div>
+      <div id="grafMes"></div>
+      <div class="tbl-wrap" id="tablaMes"></div>
+    </section>
+
+    <section class="panel" id="bloqueCat">
+      <h2>Participación por categoría</h2>
+      <p class="muted">Cuánto aporta cada categoría al total.</p>
+      <div id="grafCat" style="margin-top:8px"></div>
+      <div class="tbl-wrap" id="tablaCat"></div>
+    </section>
+
+    <div class="two">
+      <section class="panel">
+        <p class="eyebrow">Hallazgos</p>
+        <ul id="hallazgos"></ul>
+      </section>
+      <section class="panel">
+        <p class="eyebrow">Recomendaciones</p>
+        <ol id="recomendaciones"></ol>
+      </section>
+    </div>
+
+    <section class="panel">
+      <p class="eyebrow">Calidad de los datos</p>
+      <ul id="calidad"></ul>
+    </section>
+
+    <section class="panel">
+      <p class="eyebrow">Compartir</p>
+      <h2>Copia el resumen</h2>
+      <p class="muted">Copia el texto del reporte para pegarlo en un correo o un documento.</p>
+      <div class="row">
+        <button class="btn" id="copiar">Copiar resumen</button>
+        <span id="copiado" class="muted" hidden></span>
+      </div>
+      <p class="muted note">El Word (.docx) y el dashboard descargable se generan desde el archivo reporte-ejecutivo.html en tu computadora. Este enlace no permite descargas.</p>
+    </section>
+  </div>
+</div>
+
+<div id="tip" class="tip" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  var PATRONES = {
+    fecha: /fecha|date|mes|periodo|d[ií]a/i,
+    metrica: /venta|ingreso|monto|total|importe|revenue|sales|amount/i,
+    costo: /costo|cost/i,
+    categoria: /regi[oó]n|producto|vendedor|categor|sucursal|cliente|canal|tienda/i
+  };
+
+  var libro = null, filas = [], encabezados = [];
+  var estado = null, ultimoR = null, tipoMes = 'barras';
+
+  function $(id) { return document.getElementById(id); }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  function fmt(n) {
+    if (n === null || n === undefined || isNaN(n)) return '—';
+    var a = Math.abs(n), s = n < 0 ? '-' : '';
+    if (a >= 1e6) return s + (a / 1e6).toFixed(2) + ' M';
+    if (a >= 1e3) return s + (a / 1e3).toFixed(1) + ' K';
+    return s + a.toFixed(2);
+  }
+  function fmtNum(n) { return Number(n).toLocaleString('es-MX', { maximumFractionDigits: 2 }); }
+  function pct(n) { return (n === null || isNaN(n)) ? '—' : (n * 100).toFixed(1) + '%'; }
+  function signo(n) { return (n === null || isNaN(n)) ? '—' : (n >= 0 ? '+' : '') + (n * 100).toFixed(1) + '%'; }
+  function esVacio(v) { return v === null || v === undefined || String(v).trim() === ''; }
+
+  function aNumero(v) {
+    if (typeof v === 'number') return isFinite(v) ? v : null;
+    if (esVacio(v)) return null;
+    var s = String(v).trim();
+    var negativo = /^\(.*\)$/.test(s);
+    s = s.replace(/[()$€£\s]/g, '').replace(/,/g, '');
+    var n = Number(s);
+    if (s === '' || !isFinite(n)) return null;
+    return negativo ? -n : n;
+  }
+
+  function aFecha(v) {
+    if (v instanceof Date) return isNaN(v) ? null : v;
+    if (typeof v === 'number' && v > 20000 && v < 80000) {
+      return new Date(Math.round((v - 25569) * 86400 * 1000));
+    }
+    if (esVacio(v)) return null;
+    var s = String(v).trim(), m;
+    m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
+    m = s.match(/^(\d{4})[\/\-](\d{1,2})(?:[\/\-](\d{1,2}))?/);
+    if (m) return new Date(+m[1], +m[2] - 1, m[3] ? +m[3] : 1);
+    var d = new Date(s);
+    return isNaN(d) ? null : d;
+  }
+
+  function claveMes(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+  function etiquetaMes(clave) { var p = clave.split('-'); return cap(MESES[+p[1] - 1]) + ' ' + p[0]; }
+  function etiquetaCorta(clave) { var p = clave.split('-'); return MESES[+p[1] - 1].slice(0, 3) + ' ' + p[0].slice(2); }
+
+  function mostrarError(msg) { var e = $('error'); e.textContent = msg; e.hidden = false; }
+  function ocultarError() { $('error').hidden = true; }
+
+  // ----- Carga -----
+  function leerArchivo(ev) {
+    ocultarError();
+    var f = ev.target.files && ev.target.files[0];
+    if (!f) return;
+    if (typeof XLSX === 'undefined') {
+      mostrarError('No se cargó la librería de lectura de Excel. Revisa tu conexión y recarga la página.');
+      return;
+    }
+    $('info').textContent = 'Leyendo ' + f.name + '…';
+    f.arrayBuffer().then(function (buf) {
+      libro = XLSX.read(buf, { type: 'array', cellDates: true });
+      var sel = $('hoja');
+      sel.innerHTML = '';
+      libro.SheetNames.forEach(function (n) {
+        var o = document.createElement('option');
+        o.value = n; o.textContent = n;
+        sel.appendChild(o);
+      });
+      $('hojaWrap').hidden = libro.SheetNames.length < 2;
+      cargarHoja(libro.SheetNames[0]);
+      $('info').textContent = f.name;
+    }).catch(function (err) {
+      mostrarError('No pude leer el archivo. Verifica que sea .xlsx, .xls o .csv. Detalle: ' + err.message);
+    });
+  }
+
+  function cargarHoja(nombre) {
+    ocultarError();
+    var ws = libro.Sheets[nombre];
+    var aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true, blankrows: false });
+    if (aoa.length < 2) {
+      mostrarError('La hoja "' + nombre + '" no tiene encabezados y registros suficientes.');
+      return;
+    }
+    encabezados = aoa[0].map(function (h, i) { return esVacio(h) ? 'Columna ' + (i + 1) : String(h).trim(); });
+    filas = aoa.slice(1).filter(function (r) { return r.some(function (c) { return !esVacio(c); }); });
+    llenarSelectores();
+    $('config').hidden = false;
+    $('results').hidden = true;
+    ultimoR = null;
+  }
+
+  function llenarSelectores() {
+    function poblar(id, patron, textoVacio) {
+      var sel = $(id);
+      sel.innerHTML = '';
+      var vacio = document.createElement('option');
+      vacio.value = ''; vacio.textContent = textoVacio;
+      sel.appendChild(vacio);
+      encabezados.forEach(function (h, i) {
+        var o = document.createElement('option');
+        o.value = String(i); o.textContent = h;
+        sel.appendChild(o);
+      });
+      var idx = encabezados.findIndex(function (h) { return patron.test(h); });
+      sel.value = idx >= 0 ? String(idx) : '';
+    }
+    poblar('colFecha', PATRONES.fecha, '— Sin fecha —');
+    poblar('colMetrica', PATRONES.metrica, '— Selecciona —');
+    poblar('colCat', PATRONES.categoria, '— Sin categoría —');
+    poblar('colCosto', PATRONES.costo, '— No aplica —');
+  }
+
+  // ----- Análisis -----
+  function analizar() {
+    ocultarError();
+    var iF = $('colFecha').value, iM = $('colMetrica').value, iC = $('colCosto').value, iK = $('colCat').value;
+    if (iM === '') { mostrarError('Selecciona la columna de la métrica principal (ventas, ingresos o monto).'); return; }
+
+    var nombreMetrica = encabezados[+iM];
+    var vacios = 0, noNumericos = 0, fechasInvalidas = 0, sinFecha = 0, duplicados = 0;
+    var vistos = new Set(), regs = [];
+
+    filas.forEach(function (r) {
+      var clave = JSON.stringify(r);
+      if (vistos.has(clave)) duplicados++; else vistos.add(clave);
+
+      if (esVacio(r[+iM])) { vacios++; return; }
+      var v = aNumero(r[+iM]);
+      if (v === null) { noNumericos++; return; }
+
+      var mes = null;
+      if (iF !== '') {
+        var d = aFecha(r[+iF]);
+        if (d) mes = claveMes(d);
+        else if (esVacio(r[+iF])) sinFecha++;
+        else fechasInvalidas++;
+      }
+      var costo = iC !== '' ? aNumero(r[+iC]) : null;
+      var cat = iK !== '' ? (esVacio(r[+iK]) ? '(Sin dato)' : String(r[+iK]).trim()) : null;
+      regs.push({ v: v, costo: costo, cat: cat, mes: mes });
+    });
+
+    if (regs.length === 0) {
+      mostrarError('No encontré valores numéricos válidos en la columna "' + nombreMetrica + '". Revisa la selección.');
+      return;
+    }
+
+    var cats = [];
+    if (iK !== '') {
+      var acc = {};
+      regs.forEach(function (r) { acc[r.cat] = (acc[r.cat] || 0) + r.v; });
+      cats = Object.keys(acc).sort(function (a, b) { return acc[b] - acc[a]; });
+    }
+
+    estado = {
+      regs: regs, cats: cats, activas: new Set(cats),
+      meta: {
+        nombreMetrica: nombreMetrica, filasTotales: filas.length,
+        vacios: vacios, noNumericos: noNumericos, sinFecha: sinFecha, fechasInvalidas: fechasInvalidas,
+        duplicados: duplicados, tieneFecha: iF !== '', tieneCosto: iC !== '', tieneCat: iK !== ''
+      }
+    };
+
+    renderChips();
+    actualizar();
+    $('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function filtrarRegs() {
+    if (!estado.meta.tieneCat) return estado.regs;
+    return estado.regs.filter(function (r) { return estado.activas.has(r.cat); });
+  }
+
+  function actualizar() {
+    var regs = filtrarRegs();
+    if (!regs.length) {
+      mostrarError('Selecciona al menos una categoría para ver el reporte.');
+      $('results').hidden = true;
+      return;
+    }
+    ocultarError();
+    var filtro = estado.meta.tieneCat ? (estado.activas.size + ' de ' + estado.cats.length + ' categorías') : null;
+    ultimoR = calcular(regs, estado.meta, filtro);
+    mostrarResultados(ultimoR);
+  }
+
+  function renderChips() {
+    var box = $('chips');
+    box.innerHTML = '';
+    $('filtros').hidden = !estado.meta.tieneCat;
+    estado.cats.forEach(function (c) {
+      var l = document.createElement('label');
+      l.className = 'chip';
+      var cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.checked = true; cb.value = c;
+      cb.addEventListener('change', function () {
+        if (cb.checked) estado.activas.add(c); else estado.activas.delete(c);
+        actualizar();
+      });
+      var t = document.createElement('span');
+      t.textContent = c;
+      l.appendChild(cb); l.appendChild(t);
+      box.appendChild(l);
+    });
+  }
+
+  function calcular(regs, meta, filtro) {
+    var total = regs.reduce(function (a, r) { return a + r.v; }, 0);
+    var n = regs.length;
+    var promedio = total / n;
+
+    var porMes = {};
+    regs.forEach(function (r) { if (r.mes) porMes[r.mes] = (porMes[r.mes] || 0) + r.v; });
+    var meses = Object.keys(porMes).sort().map(function (k) {
+      return { clave: k, etiqueta: etiquetaMes(k), corta: etiquetaCorta(k), valor: porMes[k] };
+    });
+    var variacion = null, mejor = null, peor = null;
+    if (meses.length) {
+      mejor = meses.reduce(function (a, b) { return b.valor > a.valor ? b : a; });
+      peor = meses.reduce(function (a, b) { return b.valor < a.valor ? b : a; });
+    }
+    if (meses.length >= 2) {
+      var ult = meses[meses.length - 1].valor, ant = meses[meses.length - 2].valor;
+      variacion = ant !== 0 ? (ult - ant) / Math.abs(ant) : null;
+    }
+
+    var conCosto = regs.filter(function (r) { return r.costo !== null; });
+    var margen = null;
+    if (conCosto.length) {
+      var vv = conCosto.reduce(function (a, r) { return a + r.v; }, 0);
+      var cc = conCosto.reduce(function (a, r) { return a + r.costo; }, 0);
+      margen = vv !== 0 ? (vv - cc) / vv : null;
+    }
+
+    var categorias = null, lider = null, ultimoCat = null, alerta = null;
+    if (meta.tieneCat) {
+      var acc = {};
+      regs.forEach(function (r) { acc[r.cat] = (acc[r.cat] || 0) + r.v; });
+      categorias = Object.keys(acc).map(function (k) {
+        return { nombre: k, valor: acc[k], parte: total !== 0 ? acc[k] / total : 0 };
+      }).sort(function (a, b) { return b.valor - a.valor; });
+      lider = categorias[0];
+      ultimoCat = categorias[categorias.length - 1];
+      if (lider.parte > 0.5) {
+        alerta = lider.nombre + ' concentra más de la mitad del total (' + pct(lider.parte) + '). Alta dependencia de una sola categoría.';
+      }
+    }
+
+    var periodo = null;
+    if (meses.length) {
+      periodo = meses[0].etiqueta === meses[meses.length - 1].etiqueta
+        ? meses[0].etiqueta : meses[0].etiqueta + ' a ' + meses[meses.length - 1].etiqueta;
+    }
+
+    var resumen = [];
+    resumen.push(cap(meta.nombreMetrica) + (periodo ? ' del periodo de ' + periodo : ' de los registros') +
+      ' suman ' + fmt(total) + ' en ' + n.toLocaleString('es-MX') + ' registros.');
+    if (variacion !== null) {
+      resumen.push('El último mes (' + meses[meses.length - 1].etiqueta + ') ' +
+        (variacion >= 0 ? 'subió ' : 'bajó ') + (Math.abs(variacion) * 100).toFixed(1) + '% frente al mes anterior.');
+    }
+    if (mejor && meses.length > 1) {
+      resumen.push('El mejor mes fue ' + mejor.etiqueta + ' (' + fmt(mejor.valor) + ') y el más bajo ' +
+        peor.etiqueta + ' (' + fmt(peor.valor) + ').');
+    }
+    if (lider) resumen.push(lider.nombre + ' es la categoría líder con ' + pct(lider.parte) + ' del total.');
+    if (margen !== null) resumen.push('El margen bruto es de ' + pct(margen) + '.');
+    resumen = resumen.slice(0, 5);
+
+    var hallazgos = [];
+    if (lider && categorias.length > 1) {
+      hallazgos.push(lider.nombre + ' aporta ' + pct(lider.parte) + ' del total; ' +
+        ultimoCat.nombre + ' aporta ' + pct(ultimoCat.parte) + ', la participación más baja.');
+    }
+    if (categorias) hallazgos.push(categorias.length + ' categorías en el análisis.');
+    if (variacion !== null) hallazgos.push('El último mes cambió ' + signo(variacion) + ' frente al mes anterior.');
+    if (!hallazgos.length) hallazgos.push('Con los datos disponibles no hay hallazgos adicionales.');
+
+    var recs = [];
+    if (margen !== null && margen < 0) recs.push('El costo supera a la métrica en el periodo analizado: revisar costos y precios antes de crecer.');
+    if (alerta) recs.push('Reducir la dependencia de ' + lider.nombre + ' con una estrategia para las demás categorías.');
+    if (variacion !== null && variacion < 0) {
+      recs.push('Revisar qué causó la caída del último mes frente al anterior y si es un patrón que se repite.');
+    } else if (variacion !== null && variacion > 0 && mejor && mejor.clave === meses[meses.length - 1].clave) {
+      recs.push('Identificar qué impulsó el crecimiento del último mes para saber si se puede repetir.');
+    }
+    if (ultimoCat && categorias.length > 1) {
+      recs.push('Dar seguimiento a ' + ultimoCat.nombre + ', que aporta ' + pct(ultimoCat.parte) + ' del total.');
+    }
+    recs = recs.slice(0, 3);
+
+    var calidad = ['Filas en la hoja: ' + meta.filasTotales + '. Registros analizados: ' + n + '.'];
+    if (filtro) calidad.push('Filtro activo: ' + filtro + '. Los totales reflejan solo las categorías seleccionadas.');
+    if (meta.vacios) calidad.push('Filas sin valor en la métrica (excluidas): ' + meta.vacios + '.');
+    if (meta.noNumericos) calidad.push('Valores no numéricos en la métrica (excluidos): ' + meta.noNumericos + '.');
+    if (!meta.tieneFecha) calidad.push('Sin columna de fecha: no hay evolución mensual, mejor/peor mes ni variación.');
+    if (meta.sinFecha) calidad.push('Filas sin fecha: en el total, pero fuera de la evolución mensual (' + meta.sinFecha + ').');
+    if (meta.fechasInvalidas) calidad.push('Fechas no reconocidas: en el total, pero fuera de la evolución mensual (' + meta.fechasInvalidas + ').');
+    if (!meta.tieneCosto) calidad.push('Sin columna de costo: no se calcula margen bruto.');
+    calidad.push(meta.duplicados
+      ? 'Filas duplicadas exactas: ' + meta.duplicados + '. Se incluyeron; revisa si son registros reales.'
+      : 'No se detectaron filas duplicadas.');
+
+    return {
+      titulo: $('titulo').value.trim() || 'Reporte ejecutivo',
+      nombreMetrica: meta.nombreMetrica, periodo: periodo,
+      n: n, total: total, promedio: promedio,
+      meses: meses, variacion: variacion, mejor: mejor, peor: peor,
+      categorias: categorias, margen: margen, alerta: alerta,
+      resumen: resumen, hallazgos: hallazgos, recs: recs, calidad: calidad
+    };
+  }
+
+  // ----- Gráficos -----
+  function svgBarras(etq, val) {
+    var W = 640, H = 260, pad = 26, abajo = 46;
+    var max = Math.max.apply(null, val.concat([0])) || 1;
+    var n = val.length || 1;
+    var bw = (W - pad * 2) / n;
+    var mostrarVal = n <= 12;
+    var s = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Gráfico de barras" xmlns="http://www.w3.org/2000/svg">';
+    val.forEach(function (v, i) {
+      var h = (Math.max(v, 0) / max) * (H - abajo - 24);
+      var x = pad + i * bw + bw * 0.16, w = bw * 0.68, y = H - abajo - h;
+      var l = esc(etq[i]), vv = esc(fmt(v));
+      s += '<rect class="bar" data-l="' + l + '" data-v="' + vv + '" x="' + x.toFixed(1) + '" y="' + y.toFixed(1) +
+        '" width="' + w.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="4" style="animation-delay:' + (i * 35) + 'ms"></rect>';
+      if (mostrarVal) {
+        s += '<text class="vl" x="' + (x + w / 2).toFixed(1) + '" y="' + (y - 6).toFixed(1) + '" text-anchor="middle">' + vv + '</text>';
+      }
+      var corto = etq[i].length > 11 ? etq[i].slice(0, 10) + '…' : etq[i];
+      s += '<text x="' + (x + w / 2).toFixed(1) + '" y="' + (H - abajo + 16) + '" text-anchor="middle">' + esc(corto) + '</text>';
+    });
+    return s + '</svg>';
+  }
+
+  function svgLinea(etq, val) {
+    var W = 640, H = 260, padX = 30, abajo = 46, arriba = 24;
+    var max = Math.max.apply(null, val.concat([0])) || 1;
+    var n = val.length;
+    var pts = val.map(function (v, i) {
+      var x = n === 1 ? W / 2 : padX + i * (W - padX * 2) / (n - 1);
+      var y = H - abajo - (Math.max(v, 0) / max) * (H - abajo - arriba);
+      return { x: x, y: y };
+    });
+    var linea = pts.map(function (p) { return p.x.toFixed(1) + ',' + p.y.toFixed(1); }).join(' ');
+    var area = pts[0].x.toFixed(1) + ',' + (H - abajo) + ' ' + linea + ' ' + pts[n - 1].x.toFixed(1) + ',' + (H - abajo);
+    var s = '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Gráfico de línea" xmlns="http://www.w3.org/2000/svg">' +
+      '<polygon class="area" points="' + area + '"/>' +
+      '<polyline class="line" points="' + linea + '"/>';
+    pts.forEach(function (p, i) {
+      s += '<circle class="dot" data-l="' + esc(etq[i]) + '" data-v="' + esc(fmt(val[i])) + '" cx="' + p.x.toFixed(1) +
+        '" cy="' + p.y.toFixed(1) + '" r="5"/>';
+      s += '<text x="' + p.x.toFixed(1) + '" y="' + (H - abajo + 16) + '" text-anchor="middle">' + esc(etq[i]) + '</text>';
+    });
+    return s + '</svg>';
+  }
+
+  var tip = $('tip');
+  document.addEventListener('mousemove', function (e) {
+    var t = e.target && e.target.closest ? e.target.closest('[data-l]') : null;
+    if (!t) { tip.hidden = true; return; }
+    tip.innerHTML = '<b>' + esc(t.getAttribute('data-l')) + '</b><br>' + esc(t.getAttribute('data-v'));
+    tip.hidden = false;
+    tip.style.left = (e.clientX + 14) + 'px';
+    tip.style.top = (e.clientY + 14) + 'px';
+  });
+
+  // ----- Vista -----
+  function tablaHTML(cabeceras, filasTabla, conBarra) {
+    var h = '<table><thead><tr>' + cabeceras.map(function (c, i) {
+      return '<th' + (i > 0 ? ' class="n"' : '') + '>' + esc(c) + '</th>';
+    }).join('') + '</tr></thead><tbody>';
+    filasTabla.forEach(function (fila) {
+      h += '<tr>' + fila.map(function (c, i) {
+        if (conBarra && typeof c === 'object') {
+          return '<td class="n"><div class="mini"><span><i style="width:' + (c.pct * 100).toFixed(1) + '%"></i></span>' +
+            esc(c.txt) + '</div></td>';
+        }
+        return '<td' + (i > 0 ? ' class="n"' : '') + '>' + esc(c) + '</td>';
+      }).join('') + '</tr>';
+    });
+    return h + '</tbody></table>';
+  }
+
+  function renderMes(R) {
+    if (!R.meses.length) { $('bloqueMes').hidden = true; return; }
+    $('bloqueMes').hidden = false;
+    var etq = R.meses.map(function (m) { return m.corta; });
+    var val = R.meses.map(function (m) { return m.valor; });
+    $('grafMes').innerHTML = tipoMes === 'linea' ? svgLinea(etq, val) : svgBarras(etq, val);
+    $('tablaMes').innerHTML = tablaHTML(['Mes', 'Total'], R.meses.map(function (m) { return [m.etiqueta, fmtNum(m.valor)]; }), false);
+  }
+
+  function mostrarResultados(R) {
+    function kpi(lab, val, sub) {
+      return '<div class="kpi"><div class="kl">' + esc(lab) + '</div><div class="kv">' + esc(val) +
+        '</div>' + (sub ? '<div class="ks">' + esc(sub) + '</div>' : '') + '</div>';
+    }
+    var k = [kpi('Total', fmt(R.total), R.nombreMetrica), kpi('Promedio por registro', fmt(R.promedio)),
+      kpi('Registros analizados', R.n.toLocaleString('es-MX'))];
+    if (R.variacion !== null) k.push(kpi('Variación último mes', signo(R.variacion), R.meses[R.meses.length - 1].etiqueta));
+    if (R.mejor) k.push(kpi('Mejor mes', fmt(R.mejor.valor), R.mejor.etiqueta));
+    if (R.peor && R.meses.length > 1) k.push(kpi('Peor mes', fmt(R.peor.valor), R.peor.etiqueta));
+    if (R.margen !== null) k.push(kpi('Margen bruto', pct(R.margen)));
+    if (R.categorias) k.push(kpi('Categoría líder', pct(R.categorias[0].parte), R.categorias[0].nombre));
+    $('kpis').innerHTML = k.join('');
+
+    $('resumen').textContent = R.resumen.join(' ');
+    if (R.alerta) { $('alerta').textContent = R.alerta; $('alerta').hidden = false; }
+    else { $('alerta').hidden = true; }
+
+    $('hallazgos').innerHTML = R.hallazgos.map(function (h) { return '<li>' + esc(h) + '</li>'; }).join('');
+    $('recomendaciones').innerHTML = R.recs.length
+      ? R.recs.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('')
+      : '<li>Sin recomendaciones adicionales con los datos disponibles.</li>';
+    $('calidad').innerHTML = R.calidad.map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('');
+
+    renderMes(R);
+
+    if (R.categorias) {
+      $('bloqueCat').hidden = false;
+      $('grafCat').innerHTML = svgBarras(R.categorias.map(function (c) { return c.nombre; }),
+        R.categorias.map(function (c) { return c.valor; }));
+      $('tablaCat').innerHTML = tablaHTML(['Categoría', 'Total', 'Participación'],
+        R.categorias.map(function (c) {
+          return [c.nombre, fmtNum(c.valor), { txt: pct(c.parte), pct: Math.max(c.parte, 0) }];
+        }), true);
+    } else {
+      $('bloqueCat').hidden = true;
+    }
+
+    $('results').hidden = false;
+    $('copiado').hidden = true;
+  }
+
+  document.querySelectorAll('.seg button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      tipoMes = b.getAttribute('data-tipo');
+      document.querySelectorAll('.seg button').forEach(function (x) { x.classList.toggle('on', x === b); });
+      if (ultimoR) renderMes(ultimoR);
+    });
+  });
+
+  // ----- Texto para copiar -----
+  function textoResumen(R) {
+    var lineas = [R.titulo, '', R.resumen.join(' '), ''];
+    lineas.push('Indicadores:');
+    lineas.push('- Total: ' + fmt(R.total));
+    lineas.push('- Promedio por registro: ' + fmt(R.promedio));
+    lineas.push('- Registros analizados: ' + R.n.toLocaleString('es-MX'));
+    if (R.variacion !== null) lineas.push('- Variación del último mes: ' + signo(R.variacion));
+    if (R.margen !== null) lineas.push('- Margen bruto: ' + pct(R.margen));
+    lineas.push('');
+    lineas.push('Recomendaciones:');
+    R.recs.forEach(function (r, i) { lineas.push((i + 1) + '. ' + r); });
+    return lineas.join('\n');
+  }
+
+  $('copiar').addEventListener('click', function () {
+    if (!ultimoR) return;
+    var txt = textoResumen(ultimoR);
+    var msg = $('copiado');
+    function ok() { msg.textContent = 'Resumen copiado.'; msg.hidden = false; }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = txt; ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      var hecho = false;
+      try { hecho = document.execCommand('copy'); } catch (e) { hecho = false; }
+      ta.remove();
+      if (hecho) ok();
+      else { msg.textContent = 'No se pudo copiar. Selecciona el texto manualmente.'; msg.hidden = false; }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(ok, fallback);
+    } else {
+      fallback();
+    }
+  });
+
+  // ----- Eventos -----
+  var dz = $('dropzone');
+  ['dragenter', 'dragover'].forEach(function (ev) {
+    dz.addEventListener(ev, function (e) { e.preventDefault(); dz.classList.add('on'); });
+  });
+  ['dragleave', 'drop'].forEach(function (ev) {
+    dz.addEventListener(ev, function (e) { e.preventDefault(); dz.classList.remove('on'); });
+  });
+  dz.addEventListener('drop', function (e) {
+    var f = e.dataTransfer.files[0];
+    if (f) leerArchivo({ target: { files: [f] } });
+  });
+
+  $('archivo').addEventListener('change', leerArchivo);
+  $('hoja').addEventListener('change', function (e) { cargarHoja(e.target.value); });
+  $('analizar').addEventListener('click', analizar);
+})();
+</script>
+
+</body></html>
